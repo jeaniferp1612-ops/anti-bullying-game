@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#d9f1ff">
+<title>零霸凌找字大冒险！</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--blue:#1e88e5;--green:#43a047;--ink:#27425a;--soft:#eaf6ff}
+body{font-family:"PingFang SC","Microsoft YaHei","Noto Sans SC",Arial,sans-serif;background:linear-gradient(160deg,#d9f1ff 0%,#e9ffe9 50%,#fff4d6 100%);min-height:100vh;color:var(--ink)}
+#app{max-width:780px;margin:0 auto;padding:16px}
+.screen{display:none;animation:fade .35s ease}.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card{background:#fff;border-radius:22px;padding:clamp(16px,4vw,24px);box-shadow:0 8px 24px rgba(40,90,140,.14);margin-bottom:14px}
+h1{font-size:clamp(1.7rem,5vw,2.25rem);text-align:center;color:var(--blue);line-height:1.25}
+h2{font-size:1.25rem;margin-bottom:10px}
+.sub{text-align:center;color:#5f7f99;margin:8px 0 18px;line-height:1.6}
+.logo{font-size:clamp(3rem,10vw,4.3rem);text-align:center;margin:5px 0}
+label{display:block;font-weight:bold;margin:12px 0 6px}
+input,select{width:100%;padding:12px 14px;border:2px solid #bcdcf5;border-radius:14px;font-size:1rem;outline:none;font-family:inherit;background:#fff;color:var(--ink)}
+input:focus,select:focus{border-color:var(--blue)}
+button{font-family:inherit;cursor:pointer;border:0;border-radius:15px;padding:12px 18px;font-size:1rem;font-weight:bold;transition:transform .15s,filter .15s}
+button:active{transform:scale(.97)}button:focus-visible{outline:3px solid #ffca28;outline-offset:3px}
+.btn-main{background:linear-gradient(135deg,#43a047,#66bb6a);color:#fff;width:100%;margin-top:18px;font-size:1.15rem;padding:14px}
+.btn-blue{background:#1e88e5;color:#fff}.btn-orange{background:#ffca28;color:#4a3400}.btn-gray{background:#e3edf5;color:#27425a}.btn-red{background:#e53935;color:#fff}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+.btn-row button{flex:1;min-width:120px}
+.err{color:#c62828;text-align:center;margin-top:10px;min-height:1.3em;font-weight:bold}
+.music{position:fixed;top:10px;right:10px;z-index:50;width:46px;height:46px;border-radius:50%;background:#fff;font-size:1.3rem;padding:0;box-shadow:0 4px 12px #0002}
+.note{font-size:.9rem;line-height:1.6;color:#5f7f99;margin-top:12px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin:52px 0 10px}
+.chip{background:#fff;border-radius:999px;padding:7px 12px;font-size:.95rem;font-weight:bold;box-shadow:0 2px 8px #0001}
+.progress{height:12px;background:#d5e6f3;border-radius:99px;overflow:hidden;margin-bottom:12px}
+.progress div{height:100%;background:linear-gradient(90deg,#66bb6a,#ffca28);width:0;transition:width .4s}
+.clue{font-size:1.08rem;line-height:1.7}.clue b{color:#e65100}
+.hintbox{margin-top:9px;background:#fff8e1;border-left:5px solid #ffb300;padding:9px 12px;border-radius:8px;line-height:1.5}
+#grid{--n:6;--cell:min(calc((92vw - 36px)/var(--n)),66px);display:grid;grid-template-columns:repeat(var(--n),var(--cell));gap:2px;width:max-content;max-width:100%;margin:0 auto;background:#dcecf8;padding:7px;border-radius:18px;box-shadow:0 8px 24px #285a8c20;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.cell{width:var(--cell);height:var(--cell);display:flex;align-items:center;justify-content:center;font-size:calc(var(--cell)*.48);font-weight:bold;border-radius:9px;cursor:pointer;color:#34506b;background:#fff;transition:background .12s;touch-action:manipulation}
+.cell.sel{background:#90caf9;color:#0d47a1}.cell.hint{background:#fff176}.cell.found{background:#81c784;color:#fff}
+.shake{animation:shake .35s}@keyframes shake{25%,75%{transform:translateX(-4px)}50%{transform:translateX(4px)}}
+.feedback{padding:12px;border-radius:14px;margin-top:12px;line-height:1.6;background:#f1f8e9}
+.word-list{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.word-pill{background:#eef5fb;border-radius:999px;padding:6px 12px;font-weight:bold}.word-pill.done{background:#c8e6c9;color:#256029;text-decoration:line-through}
+.center{text-align:center}.big-score{font-size:3rem;font-weight:900;color:var(--green);margin:8px 0}
+.footer{text-align:center;color:#66839a;font-size:.82rem;padding:10px}
+@media(max-width:420px){#app{padding:10px}.topbar{gap:6px}.chip{font-size:.85rem;padding:6px 9px}.card{border-radius:18px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<button class="music" id="musicBtn" aria-label="开启或关闭音效" title="开启/关闭音效">🔇</button>
+<div id="app">
+  <section class="screen active" id="startScreen">
+    <div class="card">
+      <div class="logo">🕵️‍♀️🔎🌈</div>
+      <h1>零霸凌找字大冒险！</h1>
+      <p class="sub">Anti-Bullying Word Hunt<br>化身反霸凌小侦探，找出关键词，学习守护自己与同学！</p>
+      <label for="studentName">学生姓名 / Nama murid</label>
+      <input id="studentName" maxlength="40" autocomplete="name" placeholder="请输入姓名 / Masukkan nama">
+      <label for="studentClass">班级 / Kelas</label>
+      <select id="studentClass">
+        <option value="">请选择班级 / Pilih kelas</option>
+        <option>二年级 / Tahun 2</option><option>三年级 / Tahun 3</option>
+        <option>四年级 / Tahun 4</option><option>五年级 / Tahun 5</option>
+        <option>六年级 / Tahun 6</option>
+      </select>
+      <label for="language">游戏语言 / Bahasa</label>
+      <select id="language">
+        <option value="zh">华文为主（附马来文） / Cina + BM</option>
+        <option value="ms">马来文为主（附华文） / BM + Cina</option>
+      </select>
+      <button class="btn-main" id="startBtn">🚀 开始冒险 / Mula</button>
+      <p class="err" id="startError" role="alert"></p>
+      <p class="note">游戏不需要提交个人资料到服务器。姓名和班级只用于本次游戏画面，不会自动传送给老师。<br>Maklumat tidak dihantar ke pelayan.</p>
+    </div>
+    <div class="card">
+      <h2>🎯 游戏玩法 / Cara bermain</h2>
+      <p class="clue">1. 阅读提示，找出字格中的反霸凌关键词。<br>2. 点击关键词的第一个字，再点击最后一个字。<br>3. 找到词语后阅读解释，学习安全求助的方法。</p>
+      <p class="note">Tip: Perkataan boleh disusun secara mendatar, menegak atau menyerong. Klik huruf pertama dan huruf terakhir.</p>
+    </div>
+  </section>
+
+  <section class="screen" id="gameScreen">
+    <div class="topbar">
+      <span class="chip" id="playerChip">🧒 学生</span>
+      <span class="chip" id="levelChip">关卡 1/5</span>
+      <span class="chip" id="scoreChip">⭐ 0 分</span>
+    </div>
+    <div class="progress" aria-label="游戏进度"><div id="progressBar"></div></div>
+    <div class="card">
+      <h2 id="clueTitle">🔎 侦探任务</h2>
+      <p class="clue" id="clueText"></p>
+      <div class="hintbox" id="hintBox" hidden></div>
+    </div>
+    <div class="card">
+      <div id="grid" aria-label="找字游戏字格"></div>
+      <div class="word-list" id="wordList"></div>
+      <div id="feedback" class="feedback" aria-live="polite">选择词语的第一个字，再选择最后一个字。</div>
+      <div class="btn-row">
+        <button class="btn-orange" id="hintBtn">💡 提示 / Petunjuk</button>
+        <button class="btn-gray" id="clearBtn">↩ 重选 / Pilih semula</button>
+      </div>
+    </div>
+    <div class="btn-row"><button class="btn-gray" id="quitBtn">回到首页 / Kembali</button></div>
+  </section>
+
+  <section class="screen" id="resultScreen">
+    <div class="card center">
+      <div class="logo">🏆🌟🛡️</div>
+      <h1>反霸凌小勇士！</h1>
+      <p class="sub">Tahniah, Wira Anti-Buli!</p>
+      <p id="resultName"></p>
+      <div class="big-score" id="finalScore">0 分</div>
+      <p id="resultSummary" class="clue"></p>
+      <div class="feedback" id="resultMessage"></div>
+      <div class="btn-row">
+        <button class="btn-main" id="restartBtn">🔁 再玩一次 / Main lagi</button>
+        <button class="btn-blue" id="printBtn">🖨️ 打印结果 / Cetak</button>
+      </div>
+      <p class="note">记住：遇到霸凌，请尽快告诉可信任的老师、辅导老师、家长或监护人。若有人正处于危险中，应立即寻求现场成人协助。<br>Jika mengalami atau menyaksikan buli, beritahu guru, kaunselor, ibu bapa atau penjaga yang dipercayai.</p>
+    </div>
+  </section>
+  <p class="footer">💙 并不是一个人 · Kita tidak bersendirian</p>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = id => document.getElementById(id);
+  const levels = [
+    {word:"尊重",en:"HORMAT",clueZh:"与同学相处时，我们应该怎样对待彼此？",clueMs:"Bagaimanakah kita harus melayan satu sama lain?",hintZh:"意思是重视别人的感受和权利。",hintMs:"Menghargai perasaan dan hak orang lain.",explainZh:"尊重每个人，不取笑他人的外貌、能力、家庭或差异。",explainMs:"Hormati semua orang. Jangan mengejek rupa, kebolehan, keluarga atau perbezaan orang lain。"},
+    {word:"求助",en:"BANTU",clueZh:"如果被欺负或看到霸凌，可以向可信任的大人做什么？",clueMs:"Apakah yang boleh dilakukan jika dibuli atau melihat buli?",hintZh:"遇到困难时，主动请别人帮忙。",hintMs:"Minta pertolongan daripada orang yang dipercayai.",explainZh:"告诉老师、辅导老师、家长或监护人，是勇敢且正确的做法。",explainMs:"Beritahu guru, kaunselor, ibu bapa atau penjaga yang dipercayai. Meminta bantuan ialah tindakan berani。"},
+    {word:"友善",en:"BAIK",clueZh:"用温和的话语和行动对待别人，是什么行为？",clueMs:"Apakah sikap yang ditunjukkan melalui kata-kata dan tindakan yang baik?",hintZh:"与恶意、嘲笑相反。",hintMs:"Bersikap mesra dan tidak menyakiti orang lain.",explainZh:"友善包括邀请同学一起玩、认真倾听，以及不散播伤人的话。",explainMs:"Bersikap baik termasuk mengajak rakan bermain bersama, mendengar dan tidak menyebarkan kata-kata yang menyakitkan。"},
+    {word:"勇敢",en:"BERANI",clueZh:"看见同学被欺负时，安全地寻求帮助需要什么？",clueMs:"Apakah sikap yang diperlukan untuk mendapatkan bantuan dengan selamat?",hintZh:"面对困难时不退缩，但不需要冒险。",hintMs:"Berani bertindak dengan selamat, bukan membahayakan diri.",explainZh:"勇敢不代表打回去。可以陪伴受欺负的同学，并立刻告诉可信任的大人。",explainMs:"Berani bukan bermaksud membalas dengan kekerasan. Temani rakan dan beritahu orang dewasa yang dipercayai。"},
+    {word:"安全",en:"AMAN",clueZh:"每位学生都应该在校园里感到什么？",clueMs:"Apakah yang patut dirasai oleh setiap murid di sekolah?",hintZh:"没有受到伤害，能安心学习。",hintMs:"Bebas daripada bahaya dan dapat belajar dengan tenteram.",explainZh:"霸凌不是受害者的错。学校、学生和成人都应一起维护安全环境。",explainMs:"Buli bukan salah mangsa. Semua pihak perlu bekerjasama untuk mewujudkan persekitaran yang selamat。"}
+  ];
+  const zhWords = levels.map(x=>x.word);
+  const state = {name:"",klass:"",lang:"zh",level:0,score:0,hints:0,attempts:0,found:[],grid:[],positions:[],first:null,music:false,audio:null};
+  const dirs = [[0,1],[1,0],[1,1],[-1,1]];
+  function showScreen(id){document.querySelectorAll(".screen").forEach(s=>s.classList.toggle("active",s.id===id));window.scrollTo({top:0,behavior:"smooth"});}
+  function speakTone(freq=660,duration=.09){if(!state.music)return;try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return;if(!state.audio)state.audio=new C();const o=state.audio.createOscillator(),g=state.audio.createGain();o.frequency.value=freq;o.type="sine";g.gain.value=.07;o.connect(g);g.connect(state.audio.destination);o.start();g.gain.exponentialRampToValueAtTime(.001,state.audio.currentTime+duration);o.stop(state.audio.currentTime+duration);}catch(e){}}
+  function updateMusic(){ $("musicBtn").textContent=state.music?"🔊":"🔇";$("musicBtn").title=state.music?"关闭音效":"开启音效"; }
+  $("musicBtn").addEventListener("click",()=>{state.music=!state.music;updateMusic();if(state.music)speakTone();});
+  function shuffled(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+  function buildGrid(word){
+    const n=6, grid=Array.from({length:n},()=>Array(n).fill(""));
+    let placed=null;
+    for(let attempt=0;attempt<300&&!placed;attempt++){
+      const [dr,dc]=dirs[Math.floor(Math.random()*dirs.length)];
+      const r=Math.floor(Math.random()*n),c=Math.floor(Math.random()*n);
+      const er=r+dr*(word.length-1),ec=c+dc*(word.length-1);
+      if(er<0||er>=n||ec<0||ec>=n)continue;
+      let ok=true;for(let k=0;k<word.length;k++){const ch=grid[r+dr*k][c+dc*k];if(ch&&ch!==word[k])ok=false;}
+      if(!ok)continue;
+      const cells=[];for(let k=0;k<word.length;k++){const rr=r+dr*k,cc=c+dc*k;grid[rr][cc]=word[k];cells.push([rr,cc]);}
+      placed=cells;
+    }
+    if(!placed){placed=[];for(let i=0;i<word.length;i++){grid[0][i]=word[i];placed.push([0,i]);}}
+    const filler="反霸凌友善安全尊重帮助勇敢关爱同学老师信任";
+    for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(!grid[r][c])grid[r][c]=filler[Math.floor(Math.random()*filler.length)];
+    return {grid,positions:placed};
+  }
+  function currentWord(){return state.lang==="zh"?levels[state.level].word:levels[state.level].en;}
+  function renderLevel(){
+    const item=levels[state.level],word=currentWord();
+    const built=buildGrid(word);state.grid=built.grid;state.positions=built.positions;state.found=[];state.first=null;state.attempts=0;
+    $("playerChip").textContent="🧒 "+state.name+" · "+state.klass;
+    $("levelChip").textContent=(state.lang==="zh"?"关卡 ":"Tahap ")+(state.level+1)+"/"+levels.length;
+    $("scoreChip").textContent="⭐ "+state.score+" "+(state.lang==="zh"?"分":"mata");
+    $("progressBar").style.width=(state.level/levels.length*100)+"%";
+    $("clueTitle").textContent=state.lang==="zh"?"🔎 侦探任务":"🔎 Misi Detektif";
+    $("clueText").innerHTML=state.lang==="zh"?`${item.clueZh}<br><span style="color:#66839a;font-size:.95rem">${item.clueMs}</span>`:`${item.clueMs}<br><span style="color:#66839a;font-size:.95rem">${item.clueZh}</span>`;
+    $("hintBox").hidden=true;$("hintBox").textContent="";
+    $("feedback").textContent=state.lang==="zh"?"点击词语的第一个字，再点击最后一个字。":"Klik huruf pertama, kemudian huruf terakhir perkataan.";
+    const grid=$("grid");grid.innerHTML="";grid.style.setProperty("--n","6");
+    state.grid.forEach((row,r)=>row.forEach((ch,c)=>{const b=document.createElement("button");b.type="button";b.className="cell";b.textContent=ch;b.setAttribute("aria-label",`第${r+1}行第${c+1}列 ${ch}`);b.dataset.r=r;b.dataset.c=c;b.addEventListener("click",()=>selectCell(r,c,b));grid.appendChild(b);}));
+    $("wordList").innerHTML=`<span class="word-pill">${state.lang==="zh"?"待寻找词语 / Perkataan sasaran":"Perkataan sasaran / 待寻找词语"}</span>`;
+  }
+  function selectCell(r,c,el){
+    if(state.first===null){state.first=[r,c];document.querySelectorAll(".cell").forEach(x=>x.classList.remove("sel"));el.classList.add("sel");$("feedback").textContent=state.lang==="zh"?"已选择起点，再点击词语最后一个字。":"Huruf permulaan dipilih. Klik huruf terakhir.";speakTone(520);return;}
+    const a=state.first,b=[r,c];state.first=null;
+    const dr=b[0]-a[0],dc=b[1]-a[1],steps=Math.max(Math.abs(dr),Math.abs(dc));
+    const straight=(dr===0||dc===0||Math.abs(dr)===Math.abs(dc));
+    const chars=[];
+    if(straight&&steps<6){const sr=Math.sign(dr),sc=Math.sign(dc);for(let i=0;i<=steps;i++)chars.push(state.grid[a[0]+sr*i][a[1]+sc*i]);}
+    const chosen=chars.join(""),reverse=chars.slice().reverse().join(""),word=currentWord();
+    document.querySelectorAll(".cell").forEach(x=>x.classList.remove("sel"));
+    if(chosen===word||reverse===word){state.score+=state.hints?8:10;state.hints=0;state.found.push(word);document.querySelectorAll(".cell").forEach(x=>{const rr=+x.dataset.r,cc=+x.dataset.c;if(state.positions.some(p=>p[0]===rr&&p[1]===cc))x.classList.add("found");});$("scoreChip").textContent="⭐ "+state.score+(state.lang==="zh"?" 分":" mata");$("progressBar").style.width=((state.level+1)/levels.length*100)+"%";$("feedback").innerHTML=`<b>🎉 ${state.lang==="zh"?"找到了！":"Berjaya!"}</b><br>${state.lang==="zh"?levels[state.level].explainZh:levels[state.level].explainMs}<br><span>${state.lang==="zh"?levels[state.level].explainMs:levels[state.level].explainZh}</span>`;speakTone(880,.18);setTimeout(()=>{if(state.level<levels.length-1){state.level++;renderLevel();}else finishGame();},1700);}
+    else{
+      state.attempts++;
+      $("feedback").textContent=state.lang==="zh"?"还没找到这个词语，再试试看！":"Belum tepat. Cuba sekali lagi!";
+      if(state.attempts>=2){
+        const hintPos=state.positions[0],hintIndex=hintPos[0]*6+hintPos[1];
+        const hintCell=$("grid").children[hintIndex];
+        hintCell.classList.add("hint");
+        $("hintBox").hidden=false;
+        $("hintBox").textContent=state.lang==="zh"
+          ? "💡 小提示：黄色字格是这个词语的起点，再沿着横向、纵向或斜向寻找。"
+          : "💡 Petunjuk: Kotak kuning ialah huruf permulaan. Cari secara mendatar, menegak atau menyerong.";
+        $("feedback").textContent=state.lang==="zh"?"你已经试了两次，给你一点小提示！":"Anda telah mencuba dua kali. Ini sedikit petunjuk!";
+      }
+      $("grid").classList.remove("shake");void $("grid").offsetWidth;$("grid").classList.add("shake");speakTone(220);
+    }
+  }
+  $("hintBtn").addEventListener("click",()=>{state.hints++;const p=state.positions[0];const idx=p[0]*6+p[1];const cell=$("grid").children[idx];cell.classList.add("hint");$("hintBox").hidden=false;$("hintBox").textContent=state.lang==="zh"?"💡 小提示：从黄色字格开始，沿横向、纵向或斜向寻找。使用提示后本题得分减少。":"💡 Petunjuk: Mulakan dari kotak kuning dan cari secara mendatar, menegak atau menyerong. Markah dikurangkan apabila petunjuk digunakan.";$("feedback").textContent=state.lang==="zh"?"黄色字格提示了词语的起点。":"Kotak kuning menunjukkan huruf permulaan.";});
+  $("clearBtn").addEventListener("click",()=>{state.first=null;document.querySelectorAll(".cell").forEach(x=>x.classList.remove("sel"));});
+  $("startBtn").addEventListener("click",()=>{const name=$("studentName").value.trim(),klass=$("studentClass").value;if(!name||!klass){$("startError").textContent="请填写姓名并选择班级。 / Sila isi nama dan pilih kelas.";return;}state.name=name;state.klass=klass;state.lang=$("language").value;state.level=0;state.score=0;state.hints=0;state.attempts=0;$("startError").textContent="";showScreen("gameScreen");renderLevel();});
+  $("quitBtn").addEventListener("click",()=>showScreen("startScreen"));
+  function finishGame(){showScreen("resultScreen");$("progressBar").style.width="100%";$("resultName").textContent=state.name+" · "+state.klass;$("finalScore").textContent=state.score+" / 50 "+(state.lang==="zh"?"分":"mata");$("resultSummary").textContent=state.lang==="zh"?`你完成了全部 ${levels.length} 个关卡！`:`Anda telah menyelesaikan kesemua ${levels.length} tahap!`;$("resultMessage").textContent=state.lang==="zh"?(state.score>=45?"太棒了！你是反霸凌知识小专家！":state.score>=30?"做得好！继续学习如何安全地帮助同学。":"谢谢你的努力！再玩一次，巩固反霸凌知识吧！"):(state.score>=45?"Hebat! Anda pakar pengetahuan anti-buli!":state.score>=30?"Syabas! Terus belajar membantu rakan dengan selamat.":"Terima kasih kerana mencuba! Main lagi untuk mengukuhkan pengetahuan anti-buli.");}
+  $("restartBtn").addEventListener("click",()=>{state.level=0;state.score=0;state.hints=0;state.attempts=0;showScreen("gameScreen");renderLevel();});
+  $("printBtn").addEventListener("click",()=>window.print());
+})();
+</script>
+</body>
+</html>
